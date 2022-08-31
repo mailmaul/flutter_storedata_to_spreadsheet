@@ -1,6 +1,7 @@
 import 'package:gsheets/gsheets.dart';
+import 'package:remake_storedata_to_spreadsheet/sheetscolumn.dart';
 
-class GoogleSheets {
+class SheetsFlutter {
   static String _sheetId = "1dcLL2mOzE8QCqdrntTAuXDazEdtR2f5DT3_pPNhQWKQ";
   static const _sheetCredentials = r'''
 {
@@ -16,6 +17,33 @@ class GoogleSheets {
   "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/smisheets%40activityrecordsmi.iam.gserviceaccount.com"
 }
 ''';
-
+  static Worksheet? _userSheet;
   static final _gsheets = GSheets(_sheetCredentials);
+
+  static Future init() async {
+    try {
+      final spreadsheet = await _gsheets.spreadsheet(_sheetId);
+
+      _userSheet = await _getWorkSheet(spreadsheet, title: "record");
+      final firstRow = SheetsColumn.getColumns();
+      _userSheet!.values.insertRow(1, firstRow);
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  static Future<Worksheet> _getWorkSheet(
+    Spreadsheet spreadsheet, {
+    required String title,
+  }) async {
+    try {
+      return await spreadsheet.addWorksheet(title);
+    } catch (e) {
+      return spreadsheet.worksheetByTitle(title)!;
+    }
+  }
+
+  static Future insert(List<Map<String, dynamic>> rowList) async {
+    _userSheet!.values.map.appendRows(rowList);
+  }
 }
